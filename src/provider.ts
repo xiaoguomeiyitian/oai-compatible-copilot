@@ -27,6 +27,7 @@ import { GeminiApi, buildGeminiGenerateContentUrl, type GeminiToolCallMeta } fro
 import type { GeminiGenerateContentRequest } from "./gemini/geminiTypes";
 import { CommonApi } from "./commonApi";
 import { logger } from "./logger";
+import { I18N, t } from "./i18n";
 
 /**
  * VS Code Chat provider backed by Hugging Face Inference Providers.
@@ -531,8 +532,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 
 			if (!apiKey && !useGenericKey) {
 				const entered = await vscode.window.showInputBox({
-					title: `OAI Compatible API Key for ${normalizedProvider}`,
-					prompt: `Enter your OAI Compatible API key for ${normalizedProvider}`,
+					title: t(`OAI Compatible API Key for ${normalizedProvider}`, `${normalizedProvider} 的 OAI Compatible API 密钥`),
+					prompt: I18N.enterApiKeyForProvider(normalizedProvider),
 					ignoreFocusOut: true,
 					password: true,
 				});
@@ -550,8 +551,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 
 		if (!apiKey && useGenericKey) {
 			const entered = await vscode.window.showInputBox({
-				title: "OAI Compatible API Key",
-				prompt: "Enter your OAI Compatible API key",
+				title: t("OAI Compatible API Key", "OAI Compatible API 密钥"),
+				prompt: I18N.enterApiKey(),
 				ignoreFocusOut: true,
 				password: true,
 			});

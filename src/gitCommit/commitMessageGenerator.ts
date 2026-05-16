@@ -8,6 +8,7 @@ import { OllamaApi } from "../ollama/ollamaApi";
 import { normalizeUserModels } from "../utils";
 import { logger } from "../logger";
 import type { HFModelItem } from "../types";
+import { I18N } from "../i18n";
 
 /**
  * Git commit message generator module
@@ -48,7 +49,7 @@ export async function generateCommitMsg(secrets: vscode.SecretStorage, scm?: vsc
 		await orchestrateWorkspaceCommitMsgGeneration(secrets, git.repositories);
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		vscode.window.showErrorMessage(`[Commit Generation Failed] ${errorMessage}`);
+		vscode.window.showErrorMessage(I18N.commitGenerationFailed(errorMessage));
 	}
 }
 
@@ -56,7 +57,7 @@ async function orchestrateWorkspaceCommitMsgGeneration(secrets: vscode.SecretSto
 	const reposWithChanges = await filterForReposWithChanges(repos);
 
 	if (reposWithChanges.length === 0) {
-		vscode.window.showInformationMessage(`No changes found in any workspace repositories.`);
+		vscode.window.showInformationMessage(I18N.noChangesFound());
 		return;
 	}
 
