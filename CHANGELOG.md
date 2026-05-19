@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.4.2 (2026-05-19)
+
+- Feat(anthropic): Enable prompt caching. The system prompt and the last tool definition are now marked with `cache_control: { type: "ephemeral" }`, and in-message `cache_control` markers emitted by Copilot (`LanguageModelDataPart` with mimeType `"cache_control"`) are forwarded to Anthropic instead of being silently dropped. Add a per-model `cache_control` boolean (default `true`) to disable it for providers that reject the field.
+- Feat: Add Copilot reasoning effort picker support for OpenAI/OpenAI-Responses providers.
+
+Thanks for your contributing:
+  - @timeshiftsauce [PR #249](https://github.com/JohnnyZ93/oai-compatible-copilot/pull/249).
+  - @ccppww0001 [PR #237](https://github.com/JohnnyZ93/oai-compatible-copilot/pull/237).
+
 ## 0.4.1 (2026-05-14)
 
 - Feat(usage): Implement token usage reporting for Context Window widget

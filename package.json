@@ -25,7 +25,7 @@
 		"type": "git",
 		"url": "https://github.com/JohnnyZ93/oai-compatible-copilot"
 	},
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"engines": {
 		"vscode": "^1.120.0"
 	},
@@ -203,7 +203,7 @@
 									"low",
 									"minimal"
 								],
-								"description": "Reasoning effort level (OpenAI reasoning configuration)"
+								"description": "Default reasoning effort level for OpenAI-compatible requests. Leave empty to hide the Copilot picker."
 							},
 							"thinking": {
 								"type": "object",
@@ -356,6 +356,11 @@
 								"default": 0,
 								"minimum": 0,
 								"description": "Model-specific delay in milliseconds between consecutive requests. If not specified, falls back to global oaicopilot.delay configuration."
+							},
+							"cache_control": {
+								"type": "boolean",
+								"default": true,
+								"description": "Enable Anthropic prompt-caching breakpoints (apiMode='anthropic' only). When true, attaches cache_control={type:'ephemeral'} to the system prompt and the last tool definition, and forwards any in-message cache_control markers emitted by Copilot. Set to false for upstream providers that reject the cache_control field."
 							}
 						},
 						"required": [
