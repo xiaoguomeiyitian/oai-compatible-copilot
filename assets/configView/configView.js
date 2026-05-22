@@ -3,6 +3,8 @@ const state = {
 	baseUrl: "",
 	apiKey: "",
 	delay: 0,
+	readFileLines: 0,
+	tokenUsageEnabled: false,
 	retry: { enabled: true, max_attempts: 3, interval_ms: 1000, status_codes: [429, 500, 502, 503, 504] },
 	commitModel: "",
 	models: [],
@@ -11,12 +13,13 @@ const state = {
 };
 
 // ===================== i18n 翻译表 =====================
+// 从 HTML lang 属性读取语言设置（由 VS Code 端根据 vscode.env.language 注入）
 const LOCALE = (() => {
-	const lang = (navigator.language || "en").toLowerCase();
+	const lang = (document.documentElement.getAttribute("lang") || "en").toLowerCase();
 	return lang.startsWith("zh") ? "zh" : "en";
 })();
 
-const I18N = {
+const Texts = {
 	// 标题和通用
 	title: { en: "OAI Copilot Configuration", zh: "OAICopilot 配置" },
 	export: { en: "Export", zh: "导出" },
@@ -54,16 +57,18 @@ const I18N = {
 	saveModel: { en: "Save Model", zh: "保存模型" },
 	addModel: { en: "Add Model", zh: "添加模型" },
 	addNewModel: { en: "Add New Model", zh: "添加新模型" },
-	selectModel: { en: "Select Model", zh: "选择模型" },
+	selectModel: { en: (count) => `Select Model (${count} available)`, zh: (count) => `选择模型（${count} 个可用）` },
 	// 全局配置
 	globalConfig: { en: "Global Configuration", zh: "全局配置" },
 	globalBaseUrl: { en: "Global Base URL", zh: "全局基础 URL" },
 	globalBaseUrlDesc: { en: "The base URL for the Openai Compatible Inference API.", zh: "OpenAI 兼容推理 API 的基础 URL。" },
 	globalApiKey: { en: "Global API Key", zh: "全局 API 密钥" },
 	globalApiKeyDesc: { en: "The API Key for Authentication.", zh: "用于身份验证的 API 密钥。" },
-	delayMsDesc: { en: "Fixed delay in milliseconds between consecutive requests.", zh: "连续请求之间的固定延迟（毫秒）。" },
+	delayMsDesc: { en: "Fixed delay in milliseconds between consecutive requests.", zh: "连续请求之间的固定请求间隔（毫秒）。" },
 	readFileLines: { en: "Read File Lines", zh: "读取文件行数" },
-	readFileLinesDesc: { en: "Number of lines to read when using read_file tool. Default is 0, let model decide.", zh: "使用 read_file 工具时读取的行数。默认为 0，由模型决定。" },
+	readFileLinesDesc: { en: "Number of lines to read when using read_file tool. Default is 0, let model decide lines.", zh: "使用 read_file 工具时读取的行数。默认为 0，由模型自行决定行数。" },
+	tokenUsageEnabled: { en: "Enable Token Usage Tracking", zh: "启用 Token 消耗追踪" },
+	tokenUsageEnabledDesc: { en: "Track daily and cumulative token consumption per provider. Default is false.", zh: "按供应商追踪每日和累计 Token 消耗。默认为关闭。" },
 	saveGlobalConfig: { en: "Save Global Configuration", zh: "保存全局配置" },
 	// 重试配置
 	retryConfig: { en: "Retry Configuration", zh: "重试配置" },
@@ -103,25 +108,33 @@ const I18N = {
 	thDelayMs: { en: "Delay (ms)", zh: "延迟 (毫秒)" },
 	// 模型表单
 	modelProvider: { en: "Provider ID *", zh: "提供商 ID *" },
-	modelProviderDesc: { en: "Model provider.", zh: "模型提供商。" },
+	modelProviderDesc: { en: "The provider that serves this model.", zh: "提供此模型的供应商。" },
 	modelVision: { en: "Supports Vision", zh: "支持视觉" },
-	modelVisionDesc: { en: "Model support vision.", zh: "模型是否支持视觉。" },
-	defaultFalse: { en: "Default (False)", zh: "默认 (否)" },
+	modelVisionDesc: { en: "Whether the model supports image input.", zh: "模型是否支持图像输入。" },
+	defaultFalse: { en: "Default (False)", zh: "默认（否）" },
 	optTrue: { en: "True", zh: "是" },
 	optFalse: { en: "False", zh: "否" },
-	modelApiModeDesc: { en: "API endpoint selection.", zh: "API 端点选择。" },
+	optEmpty: { en: "Default", zh: "默认" },
+	modelApiMode: { en: "API Mode", zh: "API 模式" },
+	modelApiModeDesc: { en: "API endpoint format for the provider.", zh: "提供商的 API 端点格式。" },
 	modelIdInput: { en: "Model ID *", zh: "模型 ID *" },
 	modelIdInputDesc: { en: "Model ID (e.g., gpt-4, claude-3).", zh: "模型 ID（如 gpt-4, claude-3）。" },
+	modelConfigId: { en: "Config ID", zh: "配置 ID" },
 	modelConfigIdDesc: { en: "Configuration ID for this model.", zh: "此模型的配置 ID。" },
 	modelBaseUrl: { en: "Base URL", zh: "基础 URL" },
 	modelBaseUrlDesc: { en: "Base URL for the model provider.", zh: "模型提供商的基础 URL。" },
+	modelContextLength: { en: "Context Length", zh: "上下文长度" },
 	modelContextLengthDesc: { en: "Maximum context length.", zh: "最大上下文长度。" },
+	modelMaxTokens: { en: "Max Tokens", zh: "最大 Token 数" },
 	modelMaxTokensDesc: { en: "Maximum number of tokens to generate.", zh: "最大生成 Token 数。" },
 	modelMaxCompletionTokens: { en: "Max Completion Tokens", zh: "最大完成 Token 数" },
 	modelMaxCompletionTokensDesc: { en: "Maximum output tokens (OpenAI new standard).", zh: "最大输出 Token 数（OpenAI 新标准）。" },
+	modelTemperature: { en: "Temperature", zh: "温度" },
 	modelTemperatureDesc: { en: "Sampling temperature (range: [0, 2]). Default is 0.", zh: "采样温度（范围：[0, 2]），默认为 0。" },
+	modelTopP: { en: "Top P", zh: "Top P" },
 	modelTopPDesc: { en: "Top-p sampling value (range: (0, 1]).", zh: "Top-p 采样值（范围：(0, 1]）。" },
-	modelDelayDesc: { en: "Model-specific delay in milliseconds between consecutive requests.", zh: "模型特定的连续请求延迟（毫秒）。" },
+	modelDelay: { en: "Delay (ms)", zh: "延迟 (毫秒)" },
+	modelDelayDesc: { en: "Model-specific delay in milliseconds between consecutive requests.", zh: "模型特定的连续请求间隔（毫秒）。" },
 	// 高级设置
 	showAdvanced: { en: "Show Advanced Settings", zh: "显示高级设置" },
 	hideAdvanced: { en: "Hide Advanced Settings", zh: "隐藏高级设置" },
@@ -147,12 +160,12 @@ const I18N = {
 	modelThinkTypeDesc: { en: 'Include "thinking.type" in request body.', zh: '在请求体中包含 "thinking.type"。' },
 	modelEnableThink: { en: "Enable Thinking", zh: "启用思考" },
 	modelEnableThinkDesc: { en: 'Include "enable_thinking" in request body.', zh: '在请求体中包含 "enable_thinking"。' },
-	modelReasonEffort: { en: "Reasoning Effort (OpenAI)", zh: "推理力度 (OpenAI)" },
-	modelReasonEffortDesc: { en: 'Include "reasoning_effort" in request body.', zh: '在请求体中包含 "reasoning_effort"。' },
+	modelReasonEffort: { en: "Reasoning Effort (OpenAI)", zh: "推理强度 (OpenAI)" },
+	modelReasonEffortDesc: { en: "Default OpenAI reasoning effort. Leave empty to hide the Copilot picker.", zh: "默认 OpenAI 推理强度。留空则隐藏 Copilot 选择器。" },
 	reasoningConfig: { en: "Reasoning Configuration (OpenRouter)", zh: "推理配置 (OpenRouter)" },
 	reasoningEnabled: { en: "Reasoning Enabled", zh: "启用推理" },
 	reasoningEnabledDesc: { en: "Enable reasoning params in request body.", zh: "在请求体中启用推理参数。" },
-	reasoningEffort: { en: "Reasoning Effort", zh: "推理力度" },
+	reasoningEffort: { en: "Reasoning Effort", zh: "推理强度" },
 	reasoningEffortDesc: { en: 'Include "reasoning.effort" in request body.', zh: '在请求体中包含 "reasoning.effort"。' },
 	reasoningExclude: { en: "Reasoning Exclude", zh: "排除推理" },
 	reasoningExcludeDesc: { en: 'Include "reasoning.exclude" in request body.', zh: '在请求体中包含 "reasoning.exclude"。' },
@@ -167,6 +180,30 @@ const I18N = {
 	baseUrlPh: { en: "Base URL", zh: "基础 URL" },
 	apiKeyPh: { en: "API Key", zh: "API 密钥" },
 	headersPh: { en: '{"X-API-Version": "v1"}', zh: '{"X-API-Version": "v1"}' },
+	// API 模式
+	apiModeOpenAI: { en: "OpenAI", zh: "OpenAI" },
+	apiModeOpenAIResponses: { en: "OpenAI Responses", zh: "OpenAI Responses" },
+	apiModeOllama: { en: "Ollama", zh: "Ollama" },
+	apiModeAnthropic: { en: "Anthropic", zh: "Anthropic" },
+	apiModeGemini: { en: "Gemini", zh: "Gemini" },
+	// 提交语言
+	commitLangEnglish: { en: "English", zh: "英语" },
+	commitLangFrench: { en: "French", zh: "法语" },
+	commitLangItalian: { en: "Italian", zh: "意大利语" },
+	commitLangGerman: { en: "German", zh: "德语" },
+	commitLangSpanish: { en: "Spanish", zh: "西班牙语" },
+	commitLangRussian: { en: "Russian", zh: "俄语" },
+	commitLangChineseSimplified: { en: "Chinese (Simplified)", zh: "简体中文" },
+	commitLangChineseTraditional: { en: "Chinese (Traditional)", zh: "繁體中文" },
+	commitLangJapanese: { en: "Japanese", zh: "日语" },
+	commitLangKorean: { en: "Korean", zh: "韩语" },
+	commitLangCzech: { en: "Czech", zh: "捷克语" },
+	commitLangPortugueseBrazil: { en: "Portuguese (Brazil)", zh: "葡萄牙语 (巴西)" },
+	commitLangTurkish: { en: "Turkish", zh: "土耳其语" },
+	commitLangPolish: { en: "Polish", zh: "波兰语" },
+	// 确认消息
+	confirmDeleteProvider: { en: (provider) => `Are you sure you want to delete provider ${provider} and all its models?`, zh: (provider) => `确定要删除提供商 ${provider} 及其所有模型吗？` },
+	confirmDeleteModel: { en: (modelId) => `Are you sure you want to delete model ${modelId}?`, zh: (modelId) => `确定要删除模型 ${modelId} 吗？` },
 	// 错误消息
 	modelIdRequired: { en: "Model ID is required.", zh: "模型 ID 不能为空。" },
 	providerIdRequired: { en: "Provider ID is required.", zh: "提供商 ID 不能为空。" },
@@ -182,12 +219,61 @@ const I18N = {
 	errorFetchingModels: { en: "Error fetching models", zh: "获取模型失败" },
 	failedFetchModels: { en: "Failed to fetch models.", zh: "获取模型失败。" },
 	noModelsAvailable: { en: "No models available", zh: "无可用模型" },
+	// Token 消耗统计
+	tokenUsage: { en: "Token Usage", zh: "Token 消耗统计" },
+	tokenUsageToday: { en: "Today", zh: "今日" },
+	tokenUsageAllTime: { en: "All-time", zh: "累计" },
+	tokenUsageProvider: { en: "Provider", zh: "供应商" },
+	tokenUsagePromptTokens: { en: "Prompt Tokens", zh: "输入 Token" },
+	tokenUsageCompletionTokens: { en: "Completion Tokens", zh: "输出 Token" },
+	tokenUsageTotalTokens: { en: "Total Tokens", zh: "总 Token 数" },
+	tokenUsageRequests: { en: "Requests", zh: "请求次数" },
+	tokenUsageNoData: { en: "No token usage data recorded yet.", zh: "暂无 Token 消耗数据。" },
+	tokenUsageResetConfirm: { en: "Are you sure you want to reset all token usage statistics? This cannot be undone.", zh: "确定要重置所有 Token 消耗统计数据吗？此操作不可撤销。" },
+	tokenUsageResetDone: { en: "Token usage statistics have been reset.", zh: "Token 消耗统计数据已重置。" },
+	tokenUsageExported: { en: (path) => `Token usage data exported to ${path}`, zh: (path) => `Token 消耗数据已导出到 ${path}` },
+	tokenUsageShowDetails: { en: "Show Token Usage Details", zh: "显示 Token 消耗详情" },
+	tokenUsageReset: { en: "Reset Token Usage Statistics", zh: "重置 Token 消耗统计" },
+	tokenUsageExport: { en: "Export Token Usage Data", zh: "导出 Token 消耗数据" },
+	tokenUsageRecentDays: { en: (days) => `Last ${days} Days`, zh: (days) => `最近 ${days} 天` },
+	tokenUsagePerProvider: { en: "Per Provider", zh: "按供应商" },
+	tokenUsageContext: { en: "Token Usage", zh: "Token 使用量" },
+	tokenUsageMessages: { en: "Messages", zh: "消息" },
+	tokenUsageTools: { en: "Tools", zh: "工具" },
+	tokenUsageClickConfig: { en: "Click to Open Configuration UI", zh: "点击打开配置面板" },
+	ready: { en: "Ready", zh: "就绪" },
+	// 推理强度
+	reasoningEffort: { en: "Reasoning Effort", zh: "推理强度" },
+	reasoningEffortMinimal: { en: "Minimal", zh: "最低" },
+	reasoningEffortLow: { en: "Low", zh: "低" },
+	reasoningEffortMedium: { en: "Medium", zh: "中等" },
+	reasoningEffortHigh: { en: "High", zh: "高" },
+	reasoningEffortXHigh: { en: "XHigh", zh: "极高" },
+	reasoningEffortMax: { en: "Max", zh: "最高" },
+	reasoningEffortAuto: { en: "Auto", zh: "自动" },
+	reasoningEffortDescMinimal: { en: "Smallest reasoning budget", zh: "最低推理预算" },
+	reasoningEffortDescLow: { en: "Low reasoning budget", zh: "低推理预算" },
+	reasoningEffortDescMedium: { en: "Balanced reasoning budget", zh: "均衡推理预算" },
+	reasoningEffortDescHigh: { en: "High reasoning budget", zh: "高推理预算" },
+	reasoningEffortDescXHigh: { en: "Very high reasoning budget", zh: "极高推理预算" },
+	reasoningEffortDescMax: { en: "Maximum reasoning budget", zh: "最高推理预算" },
+	// Git 提交
+	selectRepository: { en: "Select repository for commit message generation", zh: "选择要生成提交信息的仓库" },
+	commitGenerationFailed: { en: (msg) => `[Commit Generation Failed] ${msg}`, zh: (msg) => `[提交信息生成失败] ${msg}` },
+	noChangesFound: { en: "No changes found in any workspace repositories.", zh: "工作区所有仓库中未发现更改。" },
+	apiKeyNotFound: { en: "OAI Compatible API key not found", zh: "未找到 OAI Compatible API 密钥" },
+	// 重复模型校验
+	valDuplicateModel: { en: (id, configId) => `A model with ID="${id}"${configId ? ` and Config ID="${configId}"` : ""} already exists.`, zh: (id, configId) => `ID="${id}"${configId ? ` 且配置 ID="${configId}"` : ""} 的模型已存在。` },
 };
 
-function i18n(key) {
-	const entry = I18N[key];
+function i18n(key, ...args) {
+	const entry = Texts[key];
 	if (!entry) { return key; }
-	return entry[LOCALE] || entry.en || key;
+	const value = entry[LOCALE] || entry.en || key;
+	if (typeof value === "function") {
+		return value(...args);
+	}
+	return value;
 }
 
 // 页面加载完成后应用翻译
@@ -214,6 +300,7 @@ const baseUrlInput = document.getElementById("baseUrl");
 const apiKeyInput = document.getElementById("apiKey");
 const delayInput = document.getElementById("delay");
 const readFileLinesInput = document.getElementById("readFileLines");
+const tokenUsageEnabledInput = document.getElementById("tokenUsageEnabled");
 const retryEnabledInput = document.getElementById("retryEnabled");
 const maxAttemptsInput = document.getElementById("maxAttempts");
 const intervalMsInput = document.getElementById("intervalMs");
@@ -284,6 +371,7 @@ document.getElementById("saveBase").addEventListener("click", () => {
 		apiKey: apiKeyInput.value,
 		delay: parseInt(delayInput.value) || 0,
 		readFileLines: parseInt(readFileLinesInput.value) || 0,
+		tokenUsageEnabled: tokenUsageEnabledInput.checked,
 		retry: retry,
 		commitModel: commitModelInput.value,
 		commitLanguage: commitLanguageInput.value,
@@ -313,11 +401,11 @@ document.getElementById("addProvider").addEventListener("click", () => {
 		<td><input type="password" class="provider-input" data-field="apiKey" placeholder="${i18n("apiKeyPh")}" /></td>
 		<td>
 			<select class="provider-input" data-field="apiMode">
-				<option value="openai">OpenAI</option>
-				<option value="openai-responses">OpenAI Responses</option>
-				<option value="ollama">Ollama</option>
-				<option value="anthropic">Anthropic</option>
-				<option value="gemini">Gemini</option>
+				<option value="openai">${i18n("apiModeOpenAI")}</option>
+				<option value="openai-responses">${i18n("apiModeOpenAIResponses")}</option>
+				<option value="ollama">${i18n("apiModeOllama")}</option>
+				<option value="anthropic">${i18n("apiModeAnthropic")}</option>
+				<option value="gemini">${i18n("apiModeGemini")}</option>
 			</select>
 		</td>
 		<td><textarea class="provider-input" data-field="headers" rows="2" placeholder='${i18n("headersPh")}' style="width:100%;font-family:monospace;font-size:12px;"></textarea></td>
@@ -406,11 +494,12 @@ window.addEventListener("message", (event) => {
 	const message = event.data;
 	switch (message.type) {
 		case "init": {
-			const { baseUrl, apiKey, delay, readFileLines, retry, commitModel, models, providerKeys, commitLanguage } = message.payload;
+			const { baseUrl, apiKey, delay, readFileLines, tokenUsageEnabled, retry, commitModel, models, providerKeys, commitLanguage } = message.payload;
 			state.baseUrl = baseUrl;
 			state.apiKey = apiKey;
 			state.delay = delay || 0;
 			state.readFileLines = readFileLines || 0;
+			state.tokenUsageEnabled = tokenUsageEnabled === true; // default false
 			state.retry = retry || { enabled: true, max_attempts: 3, interval_ms: 1000, status_codes: [] };
 			state.models = models || [];
 			state.commitModel = commitModel || "";
@@ -419,6 +508,7 @@ window.addEventListener("message", (event) => {
 			apiKeyInput.value = apiKey || "";
 			delayInput.value = state.delay;
 			readFileLinesInput.value = message.payload.readFileLines || 0;
+			tokenUsageEnabledInput.checked = state.tokenUsageEnabled;
 			retryEnabledInput.checked = state.retry.enabled !== false;
 			maxAttemptsInput.value = state.retry.max_attempts || 3;
 			intervalMsInput.value = state.retry.interval_ms || 1000;
@@ -469,11 +559,11 @@ function renderProviders() {
 			<td><input type="password" class="provider-input" data-field="apiKey" value="${state.providerKeys[provider] || ""}" placeholder="${i18n("apiKeyPh")}" /></td>
 			<td>
 				<select class="provider-input" data-field="apiMode">
-					<option value="openai" ${firstModel.apiMode === "openai" ? "selected" : ""}>OpenAI</option>
-					<option value="openai-responses" ${firstModel.apiMode === "openai-responses" ? "selected" : ""}>OpenAI Responses</option>
-					<option value="ollama" ${firstModel.apiMode === "ollama" ? "selected" : ""}>Ollama</option>
-					<option value="anthropic" ${firstModel.apiMode === "anthropic" ? "selected" : ""}>Anthropic</option>
-					<option value="gemini" ${firstModel.apiMode === "gemini" ? "selected" : ""}>Gemini</option>
+					<option value="openai" ${firstModel.apiMode === "openai" ? "selected" : ""}>${i18n("apiModeOpenAI")}</option>
+					<option value="openai-responses" ${firstModel.apiMode === "openai-responses" ? "selected" : ""}>${i18n("apiModeOpenAIResponses")}</option>
+					<option value="ollama" ${firstModel.apiMode === "ollama" ? "selected" : ""}>${i18n("apiModeOllama")}</option>
+					<option value="anthropic" ${firstModel.apiMode === "anthropic" ? "selected" : ""}>${i18n("apiModeAnthropic")}</option>
+					<option value="gemini" ${firstModel.apiMode === "gemini" ? "selected" : ""}>${i18n("apiModeGemini")}</option>
 				</select>
 			</td>
 			<td><textarea class="provider-input" data-field="headers" rows="2" placeholder='${i18n("headersPh")}' style="width:100%;font-family:monospace;font-size:12px;">${headersJson}</textarea></td>
@@ -529,7 +619,7 @@ function renderProviders() {
 			});
 			vscode.postMessage({
 				type: "requestConfirm", id: confirmId,
-				message: LOCALE === "zh" ? `确定要删除提供商 ${provider} 及其所有模型吗？` : `Are you sure you want to delete provider ${provider} and all its models?`,
+				message: i18n("confirmDeleteProvider", provider),
 				action: "deleteProvider",
 			});
 		});
@@ -590,7 +680,7 @@ function renderModels() {
 			});
 			vscode.postMessage({
 				type: "requestConfirm", id: confirmId,
-				message: LOCALE === "zh" ? `确定要删除模型 ${modelId} 吗？` : `Are you sure you want to delete model ${modelId}?`,
+				message: i18n("confirmDeleteModel", modelId),
 				action: "deleteModel",
 			});
 		});
@@ -720,11 +810,7 @@ function validateModelData(modelData) {
 		})
 		.some((m) => m.id === modelData.id && ((modelData.configId && m.configId === modelData.configId) || (!modelData.configId && !m.configId)));
 	if (hasDuplicate) {
-		showModelError(
-			LOCALE === "zh"
-				? `ID="${modelData.id}"${modelData.configId ? ` 且配置 ID="${modelData.configId}"` : ""} 的模型已存在。`
-				: `A model with ID="${modelData.id}"${modelData.configId ? ` and Config ID="${modelData.configId}"` : ""} already exists.`
-		);
+		showModelError(i18n("valDuplicateModel", modelData.id, modelData.configId));
 		return false;
 	}
 	if (modelData.context_length !== undefined && (isNaN(modelData.context_length) || modelData.context_length <= 0)) { showModelError(i18n("valContextLength")); return false; }
@@ -746,7 +832,7 @@ function populateModelIdDropdown(models) {
 		dropdownHeader.textContent = i18n("noModelsAvailable");
 		return;
 	}
-	dropdownHeader.textContent = LOCALE === "zh" ? `选择模型（${modelsArray.length} 个可用）` : `Select Model (${modelsArray.length} available)`;
+	dropdownHeader.textContent = i18n("selectModel", modelsArray.length);
 	modelsArray.forEach((model) => {
 		const option = document.createElement("div");
 		option.className = "dropdown-option";

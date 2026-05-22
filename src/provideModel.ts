@@ -75,7 +75,7 @@ export async function prepareLanguageModelChatInformation(
 			if (options.silent) {
 				return [];
 			} else {
-				throw new Error("OAI Compatible API key not found");
+				throw new Error(I18N.apiKeyNotFound());
 			}
 		}
 

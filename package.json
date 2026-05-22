@@ -82,6 +82,22 @@
 			"title": "%command.abortGitCommitMessage%",
 				"category": "OAICopilot",
 				"icon": "$(debug-stop)"
+			},
+			{
+				"command": "oaicopilot.showTokenUsage",
+				"category": "OAICopilot",
+				"title": "%command.showTokenUsage%",
+				"icon": "$(graph)"
+			},
+			{
+				"command": "oaicopilot.resetTokenUsage",
+				"category": "OAICopilot",
+				"title": "%command.resetTokenUsage%"
+			},
+			{
+				"command": "oaicopilot.exportTokenUsage",
+				"category": "OAICopilot",
+				"title": "%command.exportTokenUsage%"
 			}
 		],
 		"menus": {
@@ -105,6 +121,15 @@
 				{
 					"command": "oaicopilot.abortGitCommitMessage",
 					"when": "config.git.enabled && oaicopilot.isGeneratingCommit"
+				},
+				{
+					"command": "oaicopilot.showTokenUsage"
+				},
+				{
+					"command": "oaicopilot.resetTokenUsage"
+				},
+				{
+					"command": "oaicopilot.exportTokenUsage"
 				}
 			]
 		},
@@ -460,6 +485,11 @@
 					"minimum": 0,
 					"maximum": 10000,
 					"description": "%config.readFileLines.description%"
+				},
+				"oaicopilot.tokenUsageEnabled": {
+					"type": "boolean",
+					"default": false,
+					"description": "%config.tokenUsageEnabled.description%"
 				}
 			}
 		}

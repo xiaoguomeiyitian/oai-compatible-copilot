@@ -62,6 +62,14 @@ export abstract class CommonApi<TMessage, TRequestBody> {
 	}
 
 	/**
+	 * Get the accumulated token usage from the last API response.
+	 * @returns Token usage data or null if not available.
+	 */
+	getUsage(): TokenUsage | null {
+		return this._usage;
+	}
+
+	/**
 	 * Convert VS Code chat messages to specific api message format.
 	 * @param messages The VS Code chat messages to convert.
 	 * @param modelConfig Config for special model.

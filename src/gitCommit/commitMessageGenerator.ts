@@ -122,7 +122,7 @@ async function promptRepoSelection(repos: any[]) {
 	});
 
 	return await vscode.window.showQuickPick(repoItems, {
-		placeHolder: "Select repository for commit message generation",
+		placeHolder: I18N.selectRepository(),
 	});
 }
 

@@ -116,7 +116,7 @@ export const I18N = {
 	configSaved: () =>
 		t(
 			"OAI Compatible base URL, Delay, Retry and API Key have been saved to global settings.",
-			"OAI Compatible 基础 URL、延迟、重试和 API 密钥已保存到全局设置。"
+			"OAI Compatible 基础 URL、请求间隔、重试和 API 密钥已保存到全局设置。"
 	),
 	configExported: (path: string) => t(`Configuration exported to ${path}`, `配置已导出到 ${path}`),
 	configExportCancelled: () => t("Export configuration cancelled.", "导出配置已取消。"),
@@ -150,7 +150,7 @@ export const I18N = {
 		),
 	valTemperature: () => t("Temperature must be between 0 and 2.", "Temperature 必须在 0 到 2 之间。"),
 	valTopP: () => t("Top P must be between 0 and 1.", "Top P 必须在 0 到 1 之间。"),
-	valDelay: () => t("Delay must be a non-negative number.", "延迟必须为非负数。"),
+	valDelay: () => t("Delay must be a non-negative number.", "请求间隔必须为非负数。"),
 	valHeaders: () => t("Custom Headers must be a valid JSON object.", "自定义请求头必须为有效的 JSON 对象。"),
 	valExtra: () => t("Extra Parameters must be a valid JSON object.", "额外参数必须为有效的 JSON 对象。"),
 	valDuplicateModel: (id: string, configId?: string) =>
@@ -165,4 +165,51 @@ export const I18N = {
 		t("Failed to fetch models. Check the Developer Console for details.", "获取模型失败，请查看开发者控制台了解详情。"),
 	selectModel: (count: number) => t(`Select Model (${count} available)`, `选择模型（${count} 个可用）`),
 	noModelsAvailable: () => t("No models available", "无可用模型"),
+
+	// Token 消耗统计相关
+	tokenUsage: () => t("Token Usage", "Token 消耗统计"),
+	tokenUsageToday: () => t("Today", "今日"),
+	tokenUsageAllTime: () => t("All-time", "累计"),
+	tokenUsageProvider: () => t("Provider", "供应商"),
+	tokenUsagePromptTokens: () => t("Prompt Tokens", "输入 Token"),
+	tokenUsageCompletionTokens: () => t("Completion Tokens", "输出 Token"),
+	tokenUsageTotalTokens: () => t("Total Tokens", "总 Token 数"),
+	tokenUsageRequests: () => t("Requests", "请求次数"),
+	tokenUsageNoData: () => t("No token usage data recorded yet.", "暂无 Token 消耗数据。"),
+	tokenUsageResetConfirm: () =>
+		t(
+			"Are you sure you want to reset all token usage statistics? This cannot be undone.",
+			"确定要重置所有 Token 消耗统计数据吗？此操作不可撤销。"
+		),
+	tokenUsageResetDone: () => t("Token usage statistics have been reset.", "Token 消耗统计数据已重置。"),
+	tokenUsageExported: (path: string) => t(`Token usage data exported to ${path}`, `Token 消耗数据已导出到 ${path}`),
+	tokenUsageShowDetails: () => t("Show Token Usage Details", "显示 Token 消耗详情"),
+	tokenUsageReset: () => t("Reset Token Usage Statistics", "重置 Token 消耗统计"),
+	tokenUsageExport: () => t("Export Token Usage Data", "导出 Token 消耗数据"),
+	tokenUsageRecentDays: (days: number) => t(`Last ${days} Days`, `最近 ${days} 天`),
+	tokenUsagePerProvider: () => t("Per Provider", "按供应商"),
+	// 状态栏 context 模式 tooltip
+	tokenUsageContext: () => t("Context Window", "上下文窗口"),
+	tokenUsageMessages: () => t("Messages", "消息"),
+	tokenUsageTools: () => t("Tools", "工具"),
+	tokenUsageClickConfig: () => t("Click to Open Configuration UI", "点击打开配置面板"),
+	ready: () => t("Ready", "就绪"),
+	// Git 提交
+	selectRepository: () => t("Select repository for commit message generation", "选择要生成提交信息的仓库"),
+	// 错误信息
+	apiKeyNotFound: () => t("OAI Compatible API key not found", "未找到 OAI Compatible API 密钥"),
+	// 推理强度
+	reasoningEffort: () => t("Reasoning Effort", "推理强度"),
+	reasoningEffortMinimal: () => t("Minimal", "最低"),
+	reasoningEffortLow: () => t("Low", "低"),
+	reasoningEffortMedium: () => t("Medium", "中等"),
+	reasoningEffortHigh: () => t("High", "高"),
+	reasoningEffortXHigh: () => t("XHigh", "极高"),
+	reasoningEffortMax: () => t("Max", "最高"),
+	reasoningEffortDescMinimal: () => t("Smallest reasoning budget", "最低推理预算"),
+	reasoningEffortDescLow: () => t("Low reasoning budget", "低推理预算"),
+	reasoningEffortDescMedium: () => t("Balanced reasoning budget", "均衡推理预算"),
+	reasoningEffortDescHigh: () => t("High reasoning budget", "高推理预算"),
+	reasoningEffortDescXHigh: () => t("Very high reasoning budget", "极高推理预算"),
+	reasoningEffortDescMax: () => t("Maximum reasoning budget", "最高推理预算"),
 } as const;

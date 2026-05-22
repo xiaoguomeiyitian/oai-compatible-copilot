@@ -8,6 +8,8 @@ import { normalizeUserModels } from "./utils";
 import { abortCommitGeneration, generateCommitMsg } from "./gitCommit/commitMessageGenerator";
 import { TokenizerManager } from "./tokenizer/tokenizerManager";
 import { I18N, t } from "./i18n";
+import { TokenUsageTracker } from "./tokenUsage/tokenUsageTracker";
+import { TokenUsageView } from "./tokenUsage/tokenUsageView";
 
 export function activate(context: vscode.ExtensionContext) {
 	// Initialize logger
@@ -16,8 +18,12 @@ export function activate(context: vscode.ExtensionContext) {
 	// Initialize TokenizerManager with extension path
 	TokenizerManager.initialize(context.extensionPath);
 
-	const tokenCountStatusBarItem: vscode.StatusBarItem = initStatusBar(context);
-	const provider = new HuggingFaceChatModelProvider(context.secrets, tokenCountStatusBarItem);
+	// Initialize token usage tracker
+	const tokenUsageTracker = new TokenUsageTracker(context.globalState);
+
+	const tokenCountStatusBarItem: vscode.StatusBarItem = initStatusBar(context, tokenUsageTracker);
+	const provider = new HuggingFaceChatModelProvider(context.secrets, tokenCountStatusBarItem, tokenUsageTracker);
+	context.subscriptions.push(provider);
 	// Register the Hugging Face provider under the vendor id used in package.json
 	vscode.lm.registerLanguageModelChatProvider("oaicopilot", provider);
 
@@ -121,6 +127,41 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration("oaicopilot.logLevel")) {
 				logger.reloadConfig();
+			}
+		})
+	);
+
+	// Token usage statistics commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand("oaicopilot.showTokenUsage", async () => {
+			TokenUsageView.openPanel(context.extensionUri, tokenUsageTracker);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("oaicopilot.resetTokenUsage", async () => {
+			const answer = await vscode.window.showWarningMessage(
+				I18N.tokenUsageResetConfirm(),
+				I18N.yes(),
+				I18N.no()
+			);
+			if (answer === I18N.yes()) {
+				tokenUsageTracker.reset();
+				vscode.window.showInformationMessage(I18N.tokenUsageResetDone());
+			}
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand("oaicopilot.exportTokenUsage", async () => {
+			const uri = await vscode.window.showSaveDialog({
+				defaultUri: vscode.Uri.file("oaicopilot-token-usage.json"),
+				filters: { JSON: ["json"] },
+			});
+			if (uri) {
+				const data = tokenUsageTracker.exportData();
+				await vscode.workspace.fs.writeFile(uri, Buffer.from(data, "utf-8"));
+				vscode.window.showInformationMessage(I18N.tokenUsageExported(uri.fsPath));
 			}
 		})
 	);

@@ -10,6 +10,7 @@ interface InitPayload {
 	apiKey: string;
 	delay: number;
 	readFileLines: number;
+	tokenUsageEnabled: boolean;
 	retry: {
 		enabled?: boolean;
 		max_attempts?: number;
@@ -37,8 +38,9 @@ interface ExportConfig {
 	commitLanguage: string;
 	commitModel: string;
 	models: HFModelItem[];
-	providerKeys: Record<string, string>;
 	readFileLines: number;
+	tokenUsageEnabled: boolean;
+	providerKeys: Record<string, string>;
 }
 
 type IncomingMessage =
@@ -49,6 +51,7 @@ type IncomingMessage =
 			apiKey: string;
 			delay: number;
 			readFileLines: number;
+			tokenUsageEnabled: boolean;
 			retry: { enabled?: boolean; max_attempts?: number; interval_ms?: number; status_codes?: number[] };
 			commitModel: string;
 			commitLanguage: string;
@@ -115,6 +118,11 @@ export class ConfigViewPanel {
 			}
 		);
 
+		panel.iconPath = {
+			light: vscode.Uri.joinPath(extensionUri, "assets", "logo.png"),
+			dark: vscode.Uri.joinPath(extensionUri, "assets", "logo.png"),
+		};
+
 		ConfigViewPanel.currentPanel = new ConfigViewPanel(panel, extensionUri, secrets);
 	}
 
@@ -175,6 +183,7 @@ export class ConfigViewPanel {
 					message.apiKey,
 					message.delay,
 					message.readFileLines,
+					message.tokenUsageEnabled,
 					message.retry,
 					message.commitModel,
 					message.commitLanguage
@@ -282,11 +291,13 @@ export class ConfigViewPanel {
 		const commitModel = foundModel ? `${foundModel.id}${foundModel.configId ? "::" + foundModel.configId : ""}` : "";
 		const commitLanguage = config.get<string>("oaicopilot.commitLanguage", "English");
 		const readFileLines = config.get<number>("oaicopilot.readFileLines", 0);
+		const tokenUsageEnabled = config.get<boolean>("oaicopilot.tokenUsageEnabled", false);
 		const payload: InitPayload = {
 			baseUrl,
 			apiKey,
 			delay,
 			readFileLines,
+			tokenUsageEnabled,
 			retry,
 			commitModel,
 			commitLanguage,
@@ -301,6 +312,7 @@ export class ConfigViewPanel {
 		rawApiKey: string,
 		delay: number,
 		readFileLines: number,
+		tokenUsageEnabled: boolean,
 		retry: { enabled?: boolean; max_attempts?: number; interval_ms?: number; status_codes?: number[] },
 		commitModel: string,
 		commitLanguage: string
@@ -311,6 +323,7 @@ export class ConfigViewPanel {
 		await config.update("oaicopilot.baseUrl", baseUrl, vscode.ConfigurationTarget.Global);
 		await config.update("oaicopilot.delay", delay, vscode.ConfigurationTarget.Global);
 		await config.update("oaicopilot.readFileLines", readFileLines, vscode.ConfigurationTarget.Global);
+		await config.update("oaicopilot.tokenUsageEnabled", tokenUsageEnabled, vscode.ConfigurationTarget.Global);
 		await config.update("oaicopilot.retry", retry, vscode.ConfigurationTarget.Global);
 		await config.update("oaicopilot.commitLanguage", commitLanguage, vscode.ConfigurationTarget.Global);
 		if (apiKey) {
@@ -354,11 +367,13 @@ export class ConfigViewPanel {
 
 		const raw = await vscode.workspace.fs.readFile(templatePath);
 		let html = new TextDecoder("utf-8").decode(raw);
+		const locale = vscode.env.language?.toLowerCase().startsWith("zh") ? "zh-CN" : "en";
 		html = html
 			.replaceAll("%CSP_SOURCE%", csp)
 			.replaceAll("%NONCE%", nonce)
 			.replace("%CSS_URI%", cssUri.toString())
-			.replace("%SCRIPT_URI%", jsUri.toString());
+			.replace("%SCRIPT_URI%", jsUri.toString())
+			.replace("%LOCALE%", locale);
 		return html;
 	}
 
@@ -582,6 +597,8 @@ export class ConfigViewPanel {
 				}
 			}
 
+			const tokenUsageEnabled = config.get<boolean>("oaicopilot.tokenUsageEnabled", false);
+
 			const exportData: ExportConfig = {
 				version: VersionManager.getVersion(),
 				exportDate: new Date().toISOString(),
@@ -593,6 +610,7 @@ export class ConfigViewPanel {
 				commitModel,
 				models,
 				readFileLines,
+				tokenUsageEnabled,
 				providerKeys,
 			};
 
@@ -647,6 +665,7 @@ export class ConfigViewPanel {
 			await config.update("oaicopilot.delay", importData.delay, vscode.ConfigurationTarget.Global);
 			await config.update("oaicopilot.retry", importData.retry, vscode.ConfigurationTarget.Global);
 			await config.update("oaicopilot.readFileLines", importData.readFileLines, vscode.ConfigurationTarget.Global);
+			await config.update("oaicopilot.tokenUsageEnabled", importData.tokenUsageEnabled ?? false, vscode.ConfigurationTarget.Global);
 			await config.update("oaicopilot.commitLanguage", importData.commitLanguage, vscode.ConfigurationTarget.Global);
 
 			if (importData.apiKey) {

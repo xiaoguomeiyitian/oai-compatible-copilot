@@ -28,6 +28,7 @@ import type { GeminiGenerateContentRequest } from "./gemini/geminiTypes";
 import { CommonApi } from "./commonApi";
 import { logger } from "./logger";
 import { I18N, t } from "./i18n";
+import { TokenUsageTracker } from "./tokenUsage/tokenUsageTracker";
 
 /**
  * VS Code Chat provider backed by Hugging Face Inference Providers.
@@ -35,6 +36,13 @@ import { I18N, t } from "./i18n";
 export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 	/** Track last request completion time for delay calculation. */
 	private _lastRequestTime: number | null = null;
+
+	/** Last token usage from the most recent API call. */
+	private _lastUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null = null;
+
+	/** Cached token usage enabled flag, updated on configuration change. */
+	private _tokenUsageEnabled = false;
+	private _configChangeListener: vscode.Disposable;
 
 	private readonly _geminiToolCallMetaByCallId = new Map<string, GeminiToolCallMeta>();
 	private readonly _openaiResponsesPreviousResponseIdUnsupportedBaseUrls = new Set<string>();
@@ -47,8 +55,21 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 	 */
 	constructor(
 		private readonly secrets: vscode.SecretStorage,
-		private readonly statusBarItem: vscode.StatusBarItem
-	) {}
+		private readonly statusBarItem: vscode.StatusBarItem,
+		private readonly tokenUsageTracker?: TokenUsageTracker
+	) {
+		// Initialize cached config value
+		this._tokenUsageEnabled = vscode.workspace.getConfiguration().get<boolean>("oaicopilot.tokenUsageEnabled", false);
+		this._configChangeListener = vscode.workspace.onDidChangeConfiguration((e) => {
+			if (e.affectsConfiguration("oaicopilot.tokenUsageEnabled")) {
+				this._tokenUsageEnabled = vscode.workspace.getConfiguration().get<boolean>("oaicopilot.tokenUsageEnabled", false);
+			}
+		});
+	}
+
+	dispose(): void {
+		this._configChangeListener.dispose();
+	}
 
 	/**
 	 * Get the list of available language models contributed by this provider
@@ -108,6 +129,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 			},
 		};
 		const requestStartTime = Date.now();
+		let provider: string | undefined;
 		try {
 			// get model config from user settings
 			const config = vscode.workspace.getConfiguration();
@@ -174,7 +196,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 			}
 
 			// Get API key for the model's provider
-			const provider = um?.owned_by;
+			provider = um?.owned_by;
 			const useGenericKey = !um?.baseUrl;
 			const modelApiKey = await this.ensureApiKey(useGenericKey, provider);
 			if (!modelApiKey) {
@@ -182,7 +204,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					provider: provider ?? "",
 					useGenericKey,
 				});
-				throw new Error("OAI Compatible API key not found");
+				throw new Error(I18N.apiKeyNotFound());
 			}
 
 			// send chat request
@@ -242,6 +264,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					throw new Error("No response body from Ollama API");
 				}
 				await ollamaApi.processStreamingResponse(response.body, trackingProgress, token);
+				this._lastUsage = ollamaApi.getUsage();
+				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 			} else if (apiMode === "anthropic") {
 				// Anthropic API mode
 				const anthropicApi = new AnthropicApi(model.id, um?.cache_control !== false);
@@ -285,6 +309,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					throw new Error("No response body from Anthropic API");
 				}
 				await anthropicApi.processStreamingResponse(response.body, trackingProgress, token);
+				this._lastUsage = anthropicApi.getUsage();
+				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 			} else if (apiMode === "openai-responses") {
 				// OpenAI Responses API mode
 				const openaiResponsesApi = new OpenaiResponsesApi(model.id);
@@ -389,6 +415,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					throw new Error("No response body from Responses API");
 				}
 				await openaiResponsesApi.processStreamingResponse(response.body, trackingProgress, token);
+				this._lastUsage = openaiResponsesApi.getUsage();
+				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 
 				// Append a stateful marker so future requests can reuse `previous_response_id` (Copilot Chat style).
 				const responseId = openaiResponsesApi.responseId;
@@ -456,6 +484,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					throw new Error("No response body from Gemini API");
 				}
 				await geminiApi.processStreamingResponse(response.body, trackingProgress, token);
+				this._lastUsage = geminiApi.getUsage();
+				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 			} else {
 				// OpenAI compatible API mode (default)
 				const openaiApi = new OpenaiApi(model.id);
@@ -495,6 +525,8 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 					throw new Error("No response body from OAI Compatible API");
 				}
 				await openaiApi.processStreamingResponse(response.body, trackingProgress, token);
+				this._lastUsage = openaiApi.getUsage();
+				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 			}
 		} catch (err) {
 			console.error("[OAI Compatible Model Provider] Chat request failed", {
@@ -515,6 +547,20 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 			// Update last request time after successful completion
 			this._lastRequestTime = Date.now();
 		}
+	}
+
+	/**
+	 * Record token usage statistics for a successful request.
+	 */
+	private recordTokenUsage(
+		tracker: TokenUsageTracker | undefined,
+		usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } | null,
+		provider: string | undefined
+	): void {
+		if (!this._tokenUsageEnabled || !tracker || !usage || !provider) {
+			return;
+		}
+		tracker.recordUsage(provider, usage.prompt_tokens, usage.completion_tokens, usage.total_tokens);
 	}
 
 	/**
@@ -565,7 +611,10 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 	}
 }
 
-type OpenAIResponsesStatefulMarkerLocation = { marker: string; index: number };
+interface OpenAIResponsesStatefulMarkerLocation {
+	marker: string;
+	index: number;
+}
 
 function createOpenAIResponsesStatefulMarkerPart(modelId: string, marker: string): vscode.LanguageModelDataPart {
 	const payload = `${modelId}\\${marker}`;

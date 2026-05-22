@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="%LOCALE%">
 	<head>
 		<meta charset="UTF-8" />
 		<meta http-equiv="Content-Security-Policy" content="%CSP_SOURCE%" />
@@ -35,8 +35,13 @@
 				</div>
 				<div class="field">
 					<label for="readFileLines" data-i18n="readFileLines">Read File Lines</label>
-					<div class="field-description" data-i18n="readFileLinesDesc">Number of lines to read when using read_file tool. Large lines may cost more tokens. Default is 0, let model decide lines.</div>
+					<div class="field-description" data-i18n="readFileLinesDesc">Number of lines to read when using read_file tool. Default is 0, let model decide lines.</div>
 					<input id="readFileLines" type="number" min="0" placeholder="0" />
+				</div>
+				<div class="field">
+					<label for="tokenUsageEnabled" data-i18n="tokenUsageEnabled">Enable Token Usage Tracking</label>
+					<div class="field-description" data-i18n="tokenUsageEnabledDesc">Track daily and cumulative token consumption per provider. Default is false.</div>
+					<input id="tokenUsageEnabled" type="checkbox" />
 				</div>
 			</div>
 			<div class="retry-config">
@@ -78,20 +83,20 @@
 						<label for="commitLanguage" data-i18n="commitLanguage">Commit Language</label>
 						<div class="field-description" data-i18n="commitLanguageDesc">Language for generated Git commit messages.</div>
 						<select id="commitLanguage" class="model-input">
-							<option value="English">English</option>
-							<option value="French">French</option>
-							<option value="Italian">Italian</option>
-							<option value="German">German</option>
-							<option value="Spanish">Spanish</option>
-							<option value="Russian">Russian</option>
-							<option value="Chinese (Simplified)">简体中文</option>
-							<option value="Chinese (Traditional)">繁體中文</option>
-							<option value="Japanese">Japanese</option>
-							<option value="Korean">Korean</option>
-							<option value="Czech">Czech</option>
-							<option value="Portuguese (Brazil)">Portuguese (Brazil)</option>
-							<option value="Turkish">Turkish</option>
-							<option value="Polish">Polish</option>
+							<option value="English" data-i18n="commitLangEnglish">English</option>
+							<option value="French" data-i18n="commitLangFrench">French</option>
+							<option value="Italian" data-i18n="commitLangItalian">Italian</option>
+							<option value="German" data-i18n="commitLangGerman">German</option>
+							<option value="Spanish" data-i18n="commitLangSpanish">Spanish</option>
+							<option value="Russian" data-i18n="commitLangRussian">Russian</option>
+							<option value="Chinese (Simplified)" data-i18n="commitLangChineseSimplified">简体中文</option>
+							<option value="Chinese (Traditional)" data-i18n="commitLangChineseTraditional">繁體中文</option>
+							<option value="Japanese" data-i18n="commitLangJapanese">Japanese</option>
+							<option value="Korean" data-i18n="commitLangKorean">Korean</option>
+							<option value="Czech" data-i18n="commitLangCzech">Czech</option>
+							<option value="Portuguese (Brazil)" data-i18n="commitLangPortugueseBrazil">Portuguese (Brazil)</option>
+							<option value="Turkish" data-i18n="commitLangTurkish">Turkish</option>
+							<option value="Polish" data-i18n="commitLangPolish">Polish</option>
 						</select>
 					</div>
 				</div>
@@ -160,14 +165,14 @@
 					<div class="row">
 						<div class="field">
 							<label for="modelProvider" data-i18n="modelProvider">Provider ID *</label>
-							<div class="field-description" data-i18n="modelProviderDesc">Model provider.</div>
+							<div class="field-description" data-i18n="modelProviderDesc">The provider that serves this model.</div>
 							<select id="modelProvider" class="model-input" required>
 								<option value="" data-i18n="selectProvider">Select Provider</option>
 							</select>
 						</div>
 						<div class="field">
 							<label for="modelVision" data-i18n="modelVision">Supports Vision</label>
-							<div class="field-description" data-i18n="modelVisionDesc">Model support vision.</div>
+							<div class="field-description" data-i18n="modelVisionDesc">Whether the model supports image input.</div>
 							<select id="modelVision" class="model-input">
 								<option value="" data-i18n="defaultFalse">Default (False)</option>
 								<option value="true" data-i18n="optTrue">True</option>
@@ -176,13 +181,13 @@
 						</div>
 						<div class="field">
 							<label for="modelApiMode" data-i18n="modelApiMode">API Mode</label>
-							<div class="field-description" data-i18n="modelApiModeDesc">API endpoint selection.</div>
+							<div class="field-description" data-i18n="modelApiModeDesc">API endpoint format for the provider.</div>
 							<select id="modelApiMode" class="model-input">
-								<option value="openai">OpenAI</option>
-								<option value="openai-responses">OpenAI Responses</option>
-								<option value="ollama">Ollama</option>
-								<option value="anthropic">Anthropic</option>
-								<option value="gemini">Gemini</option>
+								<option value="openai" data-i18n="apiModeOpenAI">OpenAI</option>
+								<option value="openai-responses" data-i18n="apiModeOpenAIResponses">OpenAI Responses</option>
+								<option value="ollama" data-i18n="apiModeOllama">Ollama</option>
+								<option value="anthropic" data-i18n="apiModeAnthropic">Anthropic</option>
+								<option value="gemini" data-i18n="apiModeGemini">Gemini</option>
 							</select>
 						</div>
 					</div>
@@ -304,7 +309,7 @@
 									<label for="modelThinkingType" data-i18n="modelThinkType">Thinking Type</label>
 									<div class="field-description" data-i18n="modelThinkTypeDesc">Include "thinking.type" in request body.</div>
 									<select id="modelThinkingType" class="model-input">
-										<option value=""></option>
+										<option value="" data-i18n="optEmpty">Default</option>
 										<option value="enabled" data-i18n="enabled">Enabled</option>
 										<option value="disabled" data-i18n="disabled">Disabled</option>
 									</select>
@@ -313,24 +318,22 @@
 									<label for="modelEnableThinking" data-i18n="modelEnableThink">Enable Thinking</label>
 									<div class="field-description" data-i18n="modelEnableThinkDesc">Include "enable_thinking" in request body.</div>
 									<select id="modelEnableThinking" class="model-input">
-										<option value=""></option>
+										<option value="" data-i18n="optEmpty">Default</option>
 										<option value="true" data-i18n="optTrue">True</option>
 										<option value="false" data-i18n="optFalse">False</option>
 									</select>
 								</div>
 								<div class="field">
-									<label for="modelReasoningEffort">Reasoning Effort (OpenAI)</label>
-									<div class="field-description">
-										Default OpenAI reasoning effort. Leave empty to hide the Copilot picker.
-									</div>
+									<label for="modelReasoningEffort" data-i18n="modelReasonEffort">Reasoning Effort (OpenAI)</label>
+									<div class="field-description" data-i18n="modelReasonEffortDesc">Default OpenAI reasoning effort. Leave empty to hide the Copilot picker.</div>
 									<select id="modelReasoningEffort" class="model-input">
-										<option value=""></option>
-										<option value="max">Max</option>
-										<option value="xhigh">XHigh</option>
-										<option value="high">High</option>
-										<option value="medium">Medium</option>
-										<option value="low">Low</option>
-										<option value="minimal">Minimal</option>
+										<option value="" data-i18n="optEmpty">Default</option>
+										<option value="max" data-i18n="reasoningEffortMax">Max</option>
+										<option value="xhigh" data-i18n="reasoningEffortXHigh">XHigh</option>
+										<option value="high" data-i18n="reasoningEffortHigh">High</option>
+										<option value="medium" data-i18n="reasoningEffortMedium">Medium</option>
+										<option value="low" data-i18n="reasoningEffortLow">Low</option>
+										<option value="minimal" data-i18n="reasoningEffortMinimal">Minimal</option>
 									</select>
 								</div>
 							</div>
@@ -341,7 +344,7 @@
 										<label for="modelReasoningEnabled" data-i18n="reasoningEnabled">Reasoning Enabled</label>
 										<div class="field-description" data-i18n="reasoningEnabledDesc">Enable reasoning params in request body.</div>
 										<select id="modelReasoningEnabled" class="model-input">
-											<option value=""></option>
+											<option value="" data-i18n="optEmpty">Default</option>
 											<option value="true" data-i18n="optTrue">True</option>
 											<option value="false" data-i18n="optFalse">False</option>
 										</select>
@@ -350,21 +353,21 @@
 										<label for="modelReasoningEffortOR" data-i18n="reasoningEffort">Reasoning Effort</label>
 										<div class="field-description" data-i18n="reasoningEffortDesc">Include "reasoning.effort" in request body.</div>
 										<select id="modelReasoningEffortOR" class="model-input">
-											<option value=""></option>
-											<option value="max">Max</option>
-											<option value="xhigh">XHigh</option>
-											<option value="high">High</option>
-											<option value="medium">Medium</option>
-											<option value="low">Low</option>
-											<option value="minimal">Minimal</option>
-											<option value="auto">Auto</option>
+											<option value="" data-i18n="optEmpty">Default</option>
+											<option value="max" data-i18n="reasoningEffortMax">Max</option>
+											<option value="xhigh" data-i18n="reasoningEffortXHigh">XHigh</option>
+											<option value="high" data-i18n="reasoningEffortHigh">High</option>
+											<option value="medium" data-i18n="reasoningEffortMedium">Medium</option>
+											<option value="low" data-i18n="reasoningEffortLow">Low</option>
+											<option value="minimal" data-i18n="reasoningEffortMinimal">Minimal</option>
+											<option value="auto" data-i18n="reasoningEffortAuto">Auto</option>
 										</select>
 									</div>
 									<div class="field">
 										<label for="modelReasoningExclude" data-i18n="reasoningExclude">Reasoning Exclude</label>
 										<div class="field-description" data-i18n="reasoningExcludeDesc">Include "reasoning.exclude" in request body.</div>
 										<select id="modelReasoningExclude" class="model-input">
-											<option value=""></option>
+											<option value="" data-i18n="optEmpty">Default</option>
 											<option value="true" data-i18n="optTrue">True</option>
 											<option value="false" data-i18n="optFalse">False</option>
 										</select>
