@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 			// Let user select provider
 			const selectedProvider = await vscode.window.showQuickPick(providers, {
 				title: I18N.selectProvider(),
-				placeHolder: t("Select a provider to configure API key", "选择要配置 API 密钥的提供商"),
+				placeHolder: I18N.selectProviderPlaceholder(),
 			});
 
 			if (!selectedProvider) {

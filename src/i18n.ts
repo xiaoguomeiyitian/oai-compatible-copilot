@@ -79,6 +79,7 @@ export const I18N = {
 	provider: () => t("Provider", "提供商"),
 	providerId: () => t("Provider ID", "提供商 ID"),
 	selectProvider: () => t("Select Provider", "选择提供商"),
+	selectProviderPlaceholder: () => t("Select a provider to configure API key", "选择要配置 API 密钥的提供商"),
 	providerAdded: (name: string) => t(`Provider ${name} has been added.`, `提供商 ${name} 已添加。`),
 	providerUpdated: (name: string) => t(`Provider ${name} has been updated.`, `提供商 ${name} 已更新。`),
 	providerDeleted: (name: string) =>
@@ -128,13 +129,14 @@ export const I18N = {
 		t("Invalid configuration file: models must be an array", "配置文件格式无效：models 必须为数组"),
 
 	// 错误相关
-	errorUnexpected: (type: string) =>
-		t(`Unexpected error while handling configuration message[${type}].`, `处理配置消息[${type}]时发生意外错误。`),
+	errorUnexpected: (type: string, detail?: string) =>
+		t(
+			`Unexpected error while handling configuration message[${type}]${detail ? `: ${detail}` : "."}`,
+			`处理配置消息[${type}]时发生意外错误${detail ? `：${detail}` : "。"}`
+		),
 	errorUnknown: () => t("Unknown error", "未知错误"),
 
 	// Git 提交相关
-	commitGenerationFailed: (msg: string) =>
-		t(`[Commit Generation Failed] ${msg}`, `[提交信息生成失败] ${msg}`),
 	noChangesFound: () =>
 		t("No changes found in any workspace repositories.", "工作区所有仓库中未发现更改。"),
 
@@ -196,8 +198,56 @@ export const I18N = {
 	ready: () => t("Ready", "就绪"),
 	// Git 提交
 	selectRepository: () => t("Select repository for commit message generation", "选择要生成提交信息的仓库"),
+	gitExtensionNotFound: () => t("Git extension not found", "未找到 Git 扩展"),
+	noGitRepos: () => t("No Git repositories available", "无可用 Git 仓库"),
+	repoNotFoundForScm: () => t("Repository not found for provided SCM", "未找到 SCM 对应的仓库"),
+	noChangesInRepo: (repo: string) =>
+		t(`No changes in repository ${repo} for commit message`, `仓库 ${repo} 中无变更，无法生成提交信息`),
+	noCommitModels: () =>
+		t(
+			"No models configured for commit message generation. Please set 'useForCommitGeneration' to true for at least one model in your configuration.",
+			"未配置用于提交信息生成的模型，请将至少一个模型的 'useForCommitGeneration' 设置为 true。"
+		),
+	commitGenFailed: (msg: string) =>
+		t(`Failed to generate commit message: ${msg}`, `生成提交信息失败：${msg}`),
+	emptyApiResponse: () => t("Empty API response", "API 返回空响应"),
+	defaultCommitSystemPrompt: () =>
+		t(
+			"You are a helpful assistant that generates informative git commit messages based on git diffs output. Skip preamble and remove all backticks surrounding the commit message.\nBased on the provided git diff, generate a conventional format commit message.",
+			"你是一个有用的助手，根据 git diff 输出生成信息丰富的 git 提交信息。跳过前言并删除提交信息周围的所有反引号。\n根据提供的 git diff，生成常规格式的提交信息。"
+		),
+	defaultCommitUserPrompt: () =>
+		t(
+			"Notes from developer (ignore if not relevant): {{USER_CURRENT_INPUT}}",
+			"开发者备注（如不相关请忽略）：{{USER_CURRENT_INPUT}}"
+		),
+	generatingCommitMsg: (repo: string) =>
+		t(`Generating commit message for ${repo}...`, `正在为 ${repo} 生成提交信息...`),
+	diffTruncated: () => t("\n\n[Diff truncated due to size]", "\n\n[Diff 因大小限制被截断]"),
+
 	// 错误信息
 	apiKeyNotFound: () => t("OAI Compatible API key not found", "未找到 OAI Compatible API 密钥"),
+	invalidBaseUrl: () => t("Invalid base URL configuration.", "无效的基础 URL 配置。"),
+	noResponseBodyOllama: () => t("No response body from Ollama API", "Ollama API 无响应体"),
+	noResponseBodyAnthropic: () => t("No response body from Anthropic API", "Anthropic API 无响应体"),
+	noResponseBodyResponses: () => t("No response body from Responses API", "Responses API 无响应体"),
+	invalidGeminiBaseUrl: () => t("Invalid Gemini base URL configuration.", "无效的 Gemini 基础 URL 配置。"),
+	noResponseBodyGemini: () => t("No response body from Gemini API", "Gemini API 无响应体"),
+	noResponseBodyOai: () => t("No response body from OAI Compatible API", "OAI Compatible API 无响应体"),
+	toolModeRequiredUnsupported: () =>
+		t("LanguageModelChatToolMode.Required is not supported with more than one tool", "LanguageModelChatToolMode.Required 不支持多个工具"),
+	invalidBase64Image: () => t("Could not read image: invalid base64 image string", "无法读取图片：无效的 base64 图片字符串"),
+	unsupportedImageFormat: () => t("Unsupported image format", "不支持的图片格式"),
+	jpegDimensionsNotFound: () => t("JPEG dimensions not found", "未找到 JPEG 图片尺寸"),
+	invalidWebPImage: () => t("Not a valid WebP image.", "不是有效的 WebP 图片。"),
+	methodNotImplemented: () => t("Method not implemented.", "方法未实现。"),
+	invalidJsonForToolCall: () => t("Invalid JSON for tool call", "工具调用 JSON 格式无效"),
+	unsupportedWebPFormat: () => t("Unsupported WebP format.", "不支持的 WebP 格式。"),
+	extensionPathNotInitialized: () =>
+		t("Extension path not initialized. Call TokenizerManager.setExtensionPath() first.", "扩展路径未初始化。请先调用 TokenizerManager.setExtensionPath()。"),
+	gitNotInstalled: () => t("Git is not installed", "Git 未安装"),
+	notGitRepository: () => t("Not a git repository", "不是 Git 仓库"),
+	noChangesInWorkspace: () => t("No changes in workspace for commit message", "工作区无变更，无法生成提交信息"),
 	// 推理强度
 	reasoningEffort: () => t("Reasoning Effort", "推理强度"),
 	reasoningEffortMinimal: () => t("Minimal", "最低"),

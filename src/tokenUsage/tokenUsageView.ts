@@ -405,14 +405,16 @@ export class TokenUsageView {
 		});
 
 		// Legend
+		const legendRows = Math.ceil(providerLines.length / 4);
 		const legendItems = providerLines.map(({ provider, color }, i) => {
-			const lx = padding.left + (i % 4) * 180;
-			const ly = svgHeight - 10;
+			const col = i % 4;
+			const row = Math.floor(i / 4);
+			const lx = padding.left + col * 180;
+			const ly = svgHeight - 10 + row * 20;
 			return '<rect x="' + lx + '" y="' + (ly - 10) + '" width="12" height="12" rx="2" fill="' + color + '" /><text x="' + (lx + 16) + '" y="' + ly + '" fill="var(--fg)" font-size="12">' + provider + '</text>';
 		});
 
 		// Adjust SVG height for legend
-		const legendRows = Math.ceil(providerLines.length / 4);
 		const totalSvgHeight = svgHeight + legendRows * 20;
 
 		const svgParts: string[] = [];

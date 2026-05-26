@@ -12,6 +12,7 @@ import type { OpenAIFunctionToolDef } from "../openai/openaiTypes";
 
 import { CommonApi } from "../commonApi";
 import { logger } from "../logger";
+import { I18N } from "../i18n";
 
 import {
 	isImageMimeType,
@@ -1034,7 +1035,7 @@ export class GeminiApi extends CommonApi<GeminiChatMessage, GeminiGenerateConten
 		baseUrl: string,
 		apiKey: string
 	): AsyncGenerator<{ type: "text"; text: string }> {
-		throw new Error("Method not implemented.");
+		throw new Error(I18N.methodNotImplemented());
 	}
 }
 

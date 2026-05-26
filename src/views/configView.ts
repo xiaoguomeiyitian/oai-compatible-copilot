@@ -139,11 +139,8 @@ export class ConfigViewPanel {
 			async (message) => {
 				this.handleMessage(message).catch((err) => {
 					console.error("[oaicopilot] handleMessage failed", err);
-					vscode.window.showErrorMessage(
-						err instanceof Error
-							? err.message
-							: I18N.errorUnexpected(message.type)
-					);
+					const errorMessage = err instanceof Error ? err.message : String(err);
+					vscode.window.showErrorMessage(I18N.errorUnexpected(message.type, errorMessage));
 				});
 			},
 			null,

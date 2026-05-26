@@ -210,7 +210,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 			// send chat request
 			const BASE_URL = baseUrl;
 			if (!BASE_URL || !BASE_URL.startsWith("http")) {
-				throw new Error(`Invalid base URL configuration.`);
+				throw new Error(I18N.invalidBaseUrl());
 			}
 
 			// get retry config
@@ -261,7 +261,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				}, retryConfig);
 
 				if (!response.body) {
-					throw new Error("No response body from Ollama API");
+					throw new Error(I18N.noResponseBodyOllama());
 				}
 				await ollamaApi.processStreamingResponse(response.body, trackingProgress, token);
 				this._lastUsage = ollamaApi.getUsage();
@@ -306,7 +306,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				}, retryConfig);
 
 				if (!response.body) {
-					throw new Error("No response body from Anthropic API");
+					throw new Error(I18N.noResponseBodyAnthropic());
 				}
 				await anthropicApi.processStreamingResponse(response.body, trackingProgress, token);
 				this._lastUsage = anthropicApi.getUsage();
@@ -412,7 +412,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				}
 
 				if (!response.body) {
-					throw new Error("No response body from Responses API");
+					throw new Error(I18N.noResponseBodyResponses());
 				}
 				await openaiResponsesApi.processStreamingResponse(response.body, trackingProgress, token);
 				this._lastUsage = openaiResponsesApi.getUsage();
@@ -459,7 +459,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				const url = buildGeminiGenerateContentUrl(BASE_URL, parsedModelId.baseId, true);
 				logger.debug("request.body", { url, requestBody });
 				if (!url) {
-					throw new Error("Invalid Gemini base URL configuration.");
+					throw new Error(I18N.invalidGeminiBaseUrl());
 				}
 
 				const response = await executeWithRetry(async () => {
@@ -481,7 +481,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				}, retryConfig);
 
 				if (!response.body) {
-					throw new Error("No response body from Gemini API");
+					throw new Error(I18N.noResponseBodyGemini());
 				}
 				await geminiApi.processStreamingResponse(response.body, trackingProgress, token);
 				this._lastUsage = geminiApi.getUsage();
@@ -522,7 +522,7 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				}, retryConfig);
 
 				if (!response.body) {
-					throw new Error("No response body from OAI Compatible API");
+					throw new Error(I18N.noResponseBodyOai());
 				}
 				await openaiApi.processStreamingResponse(response.body, trackingProgress, token);
 				this._lastUsage = openaiApi.getUsage();

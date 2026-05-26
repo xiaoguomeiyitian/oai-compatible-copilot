@@ -22,6 +22,7 @@ import {
 
 import { CommonApi } from "../commonApi";
 import { logger } from "../logger";
+import { I18N } from "../i18n";
 
 export interface ResponsesInputMessage {
 	role: "user" | "assistant" | "system";
@@ -732,7 +733,7 @@ export class OpenaiResponsesApi extends CommonApi<ResponsesInputItem, Record<str
 		}
 
 		if (!response.body) {
-			throw new Error("No response body from OpenAI Responses API");
+			throw new Error(I18N.noResponseBodyResponses());
 		}
 
 		// Process SSE streaming response

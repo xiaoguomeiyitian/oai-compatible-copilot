@@ -30,6 +30,7 @@ import {
 
 import { CommonApi } from "../commonApi";
 import { logger } from "../logger";
+import { I18N } from "../i18n";
 
 export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unknown>> {
 	constructor(modelId: string) {
@@ -521,7 +522,7 @@ export class OpenaiApi extends CommonApi<OpenAIChatMessage, Record<string, unkno
 		}
 
 		if (!response.body) {
-			throw new Error("No response body from OpenAI API");
+			throw new Error(I18N.noResponseBodyOai());
 		}
 
 		// Process the response

@@ -23,6 +23,7 @@ import type {
 import { isImageMimeType, isToolResultPart, collectToolResultText, convertToolsToOpenAI, mapRole } from "../utils";
 
 import { CommonApi } from "../commonApi";
+import { I18N } from "../i18n";
 import { logger } from "../logger";
 
 export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBody> {
@@ -630,7 +631,7 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 		}
 
 		if (!response.body) {
-			throw new Error("No response body from Anthropic API");
+			throw new Error(I18N.noResponseBodyAnthropic());
 		}
 
 		// Process the response

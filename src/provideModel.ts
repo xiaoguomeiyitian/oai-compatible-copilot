@@ -82,7 +82,7 @@ export async function prepareLanguageModelChatInformation(
 		const config = vscode.workspace.getConfiguration();
 		const BASE_URL = config.get<string>("oaicopilot.baseUrl", "");
 		if (!BASE_URL || !BASE_URL.startsWith("http")) {
-			throw new Error(`Invalid base URL configuration.`);
+			throw new Error(I18N.invalidBaseUrl());
 		}
 		const { models } = await fetchModels(BASE_URL, apiKey);
 
