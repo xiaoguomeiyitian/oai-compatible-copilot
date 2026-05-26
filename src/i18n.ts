@@ -101,7 +101,6 @@ export const I18N = {
 	model: () => t("Model", "模型"),
 	modelId: () => t("Model ID", "模型 ID"),
 	modelIdRequired: () => t("Model ID is required.", "模型 ID 不能为空。"),
-	providerIdRequired2: () => t("Provider ID is required.", "提供商 ID 不能为空。"),
 	modelAdded: (id: string) => t(`Model ${id} has been added.`, `模型 ${id} 已添加。`),
 	modelUpdated: (id: string) => t(`Model ${id} has been updated.`, `模型 ${id} 已更新。`),
 	modelDeleted: (id: string) => t(`Model ${id} has been deleted.`, `模型 ${id} 已删除。`),

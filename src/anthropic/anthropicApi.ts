@@ -73,7 +73,7 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 	 */
 	convertMessages(
 		messages: readonly LanguageModelChatRequestMessage[],
-		modelConfig: { includeReasoningInRequest: boolean }
+		_modelConfig: { includeReasoningInRequest: boolean }
 	): AnthropicMessage[] {
 		const out: AnthropicMessage[] = [];
 
@@ -167,10 +167,12 @@ export class AnthropicApi extends CommonApi<AnthropicMessage, AnthropicRequestBo
 			}
 
 			// Add thinking content for assistant messages
-			if (role === "assistant" && modelConfig.includeReasoningInRequest) {
+			// Always pass back thinking content if present in message history.
+			// Reasoning models (e.g. DeepSeek) require previous thinking to be included.
+			if (role === "assistant" && joinedThinking) {
 				contentBlocks.push({
 					type: "thinking",
-					thinking: joinedThinking || "Next step.",
+					thinking: joinedThinking,
 				});
 			}
 

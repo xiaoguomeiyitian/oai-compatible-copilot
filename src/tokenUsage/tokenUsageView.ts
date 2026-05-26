@@ -51,19 +51,19 @@ export class TokenUsageView {
 					}
 					break;
 				case "reset":
-						vscode.commands.executeCommand("oaicopilot.resetTokenUsage");
-						// Refresh the panel after reset
-						setTimeout(() => {
-							if (TokenUsageView._panel && TokenUsageView._tracker) {
-								TokenUsageView._panel.webview.html = TokenUsageView._getHtml(
-									TokenUsageView._panel.webview,
-									extensionUri,
-									TokenUsageView._tracker
-								);
-							}
-						}, 500);
-						break;
-				}
+					vscode.commands.executeCommand("oaicopilot.resetTokenUsage");
+					// Refresh the panel after reset
+					setTimeout(() => {
+						if (TokenUsageView._panel && TokenUsageView._tracker) {
+							TokenUsageView._panel.webview.html = TokenUsageView._getHtml(
+								TokenUsageView._panel.webview,
+								extensionUri,
+								TokenUsageView._tracker
+							);
+						}
+					}, 500);
+					break;
+			}
 			},
 			undefined
 		);
@@ -243,7 +243,10 @@ export class TokenUsageView {
 			}
 		}
 
-		for (const [provider, s] of stats) {
+		// Sort by promptTokens descending
+		const sortedEntries = [...stats.entries()].sort((a, b) => b[1].promptTokens - a[1].promptTokens);
+
+		for (const [provider, s] of sortedEntries) {
 			const barWidth = Math.max((s.totalTokens / maxTokens) * 100, 2);
 			rows.push(`
 				<tr>
@@ -322,8 +325,8 @@ export class TokenUsageView {
 		}
 
 		// SVG chart dimensions
-		const svgWidth = 800;
-		const svgHeight = 350;
+		const svgWidth = 950;
+		const svgHeight = 300;
 		const padding = { top: 30, right: 20, bottom: 60, left: 70 };
 		const chartWidth = svgWidth - padding.left - padding.right;
 		const chartHeight = svgHeight - padding.top - padding.bottom;
@@ -418,7 +421,7 @@ export class TokenUsageView {
 		const totalSvgHeight = svgHeight + legendRows * 20;
 
 		const svgParts: string[] = [];
-		svgParts.push('<svg viewBox="0 0 ' + svgWidth + ' ' + totalSvgHeight + '" width="100%" style="max-width: ' + svgWidth + 'px; height: auto;">');
+		svgParts.push('<svg viewBox="0 0 ' + svgWidth + ' ' + totalSvgHeight + '" width="' + svgWidth + '" style="height: auto;">');
 		svgParts.push('<!-- Grid -->');
 		svgParts.push(...gridLines);
 		svgParts.push('<!-- Axes -->');

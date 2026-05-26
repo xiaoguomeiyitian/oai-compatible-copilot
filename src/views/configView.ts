@@ -140,7 +140,8 @@ export class ConfigViewPanel {
 				this.handleMessage(message).catch((err) => {
 					console.error("[oaicopilot] handleMessage failed", err);
 					const errorMessage = err instanceof Error ? err.message : String(err);
-					vscode.window.showErrorMessage(I18N.errorUnexpected(message.type, errorMessage));
+					const messageType = message && typeof message === "object" ? (message as Record<string, unknown>).type : "unknown";
+					vscode.window.showErrorMessage(I18N.errorUnexpected(String(messageType), errorMessage));
 				});
 			},
 			null,
@@ -230,20 +231,23 @@ export class ConfigViewPanel {
 	}
 
 	private async handleConfirmRequest(id: string, message: string, action: string) {
-		let confirmed: boolean | string | undefined;
+		let confirmed = false;
 
 		if (action === "showInfo") {
 			await vscode.window.showInformationMessage(message);
 			confirmed = true;
 		} else {
-			confirmed = await vscode.window.showInformationMessage(message, { modal: true }, I18N.yes(), I18N.no());
+			const result = await vscode.window.showInformationMessage(
+				message, { modal: true }, I18N.yes(), I18N.no()
+			);
+			confirmed = result === I18N.yes();
 		}
 
 		// Send response back to webview
 		this.panel.webview.postMessage({
 			type: "confirmResponse",
 			id: id,
-			confirmed: action === "showInfo" ? true : confirmed === I18N.yes(),
+			confirmed,
 		} as OutgoingMessage);
 	}
 

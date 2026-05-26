@@ -112,7 +112,7 @@ export class OpenaiResponsesApi extends CommonApi<ResponsesInputItem, Record<str
 					const callId = (part as { callId?: string }).callId ?? "";
 					const content = collectToolResultText(part as { content?: ReadonlyArray<unknown> });
 					toolResults.push({ callId, content });
-				} else if (part instanceof vscode.LanguageModelThinkingPart && modelConfig.includeReasoningInRequest) {
+				} else if (part instanceof vscode.LanguageModelThinkingPart) {
 					const content = Array.isArray(part.value) ? part.value.join("") : part.value;
 					thinkingParts.push(content);
 				}

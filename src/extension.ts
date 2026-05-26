@@ -115,7 +115,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register the generateGitCommitMessage command handler
 	context.subscriptions.push(
 		vscode.commands.registerCommand("oaicopilot.generateGitCommitMessage", async (scm) => {
-			generateCommitMsg(context.secrets, scm);
+			await generateCommitMsg(context.secrets, scm);
 		}),
 		vscode.commands.registerCommand("oaicopilot.abortGitCommitMessage", () => {
 			abortCommitGeneration();

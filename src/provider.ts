@@ -528,6 +528,10 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 				this._lastUsage = openaiApi.getUsage();
 				this.recordTokenUsage(this.tokenUsageTracker, this._lastUsage, provider);
 			}
+
+			// Update last request time only after successful completion.
+			// This ensures the delay calculation is not affected by failed requests.
+			this._lastRequestTime = Date.now();
 		} catch (err) {
 			console.error("[OAI Compatible Model Provider] Chat request failed", {
 				modelId: model.id,
@@ -544,8 +548,6 @@ export class HuggingFaceChatModelProvider implements LanguageModelChatProvider {
 		} finally {
 			const durationMs = Date.now() - requestStartTime;
 			logger.info("request.end", { modelId: model.id, durationMs });
-			// Update last request time after successful completion
-			this._lastRequestTime = Date.now();
 		}
 	}
 
