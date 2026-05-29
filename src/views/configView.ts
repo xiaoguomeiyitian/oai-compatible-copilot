@@ -104,6 +104,8 @@ export class ConfigViewPanel {
 
 		if (ConfigViewPanel.currentPanel) {
 			ConfigViewPanel.currentPanel.panel.reveal(column);
+			// Refresh data in case config was modified while panel was hidden
+			ConfigViewPanel.currentPanel.sendInit();
 			return;
 		}
 
@@ -148,8 +150,8 @@ export class ConfigViewPanel {
 			this.disposables
 		);
 
-		// Send initialization data
-		this.sendInit();
+		// Init data is sent in response to webview's requestInit message.
+		// This ensures the webview JS has loaded and registered its message listener.
 	}
 
 	private async update() {
